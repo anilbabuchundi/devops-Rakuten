@@ -1,0 +1,20 @@
+---
+- name: "[Group-add-Task] Add group ansible to remote server"
+  remote_user: root
+  become: yes
+  become_method: sudo
+  group:
+    name: nginx
+    state: present  
+- name: "[User-Create-Task] create user ansible" 
+  remote_user: root
+  become: yes
+  become_method: sudo
+  user:
+       name: "{{ unixuser }}"
+       comment: "Privileged User"
+       password: "{{ unixpass }}"
+       group: nginx
+       append: yes
+       shell: /bin/bash
+       groups=sudo,nginx

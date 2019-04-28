@@ -1,0 +1,24 @@
+# This role is used to install necessary software tools using yum and pip to run the Flask app
+- name: "[YUM-INSTALL] this task is used to install softwares using yum module"
+  yum: 
+    name:
+      - git
+      - epel-release
+      - net-tools
+      - python-pip 
+      - python-devel 
+      - gcc
+      - nginx
+      - pip
+      - java
+    state: present
+
+#PIP-INSTALL] This task is used to install tools using PIP
+- pip:
+    name:
+      - setuptools
+      - Flask
+      - Werkzeug
+      - virtualenv
+      - wsgi
+      - uwsgi

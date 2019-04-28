@@ -1,0 +1,9 @@
+# Linux usernames and passwords
+
+unixuser: nginx
+unixpass: nginx
+
+# base path of the uwsgi web service
+
+basepath: /webapps/devops/
+

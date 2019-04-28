@@ -1,0 +1,7 @@
+[Unit]
+    Description=uWSGI instance to serve myproject
+[Service]
+    ExecStartPre=-/usr/bin/bash -c 'mkdir -p /run/uwsgi; chown root /run/uwsgi'
+    ExecStart=/usr/bin/bash -c 'cd /root/myapp; source myprojectenv/bin/activate; uwsgi --ini wsgi-dev.ini'
+[Install] 
+    WantedBy=multi-user.target

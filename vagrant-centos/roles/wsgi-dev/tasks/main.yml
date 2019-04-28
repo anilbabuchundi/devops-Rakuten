@@ -1,0 +1,95 @@
+---
+# This playbook is use for configura the uwsgi web service environment and configure nginx 
+# This useful to restart the services of uwsgi (i can use handlers as well instead of writing restart login here)
+# tasks file for wsgi-dev
+- name: "[uwsgi-task] Creating base path directory"
+  file: name="{{ basepath }}" state=directory recurese=yes
+  become_user: "{{ unixuser}}"
+
+- name: "[uwsgi-task] creating python virtual env"
+  shell: "env virtualenv myprojectenv"
+  args:
+     chdir: "{{ basepath }}"
+  become_user: "{{ unixuser}}"
+
+- name: "[uwsgi-task] activate the python environment"
+  shell: "source myprojectenv/bin/activate"
+  args:
+    chdir: "{{ basepath }}"
+  when: envstatus.rc  == 0
+  become_user: "{{ unixuser}}"
+
+- name: "[uwsgi-task] Failed message in case any error while creating virtual env"
+  fail:
+    msg: "Failed, Creating virtual environmenti and kindly have a look manually what went wrong"
+  when: envstatus.rc  == 1
+  become_user: "{{ unixuser}}"
+
+- name: "[uwsgi-task] Test the uwsgi interface"
+  shell: "uwsgi --socket 0.0.0.0:8082 --protocol=http -w wsgi"
+  args:
+    chdir: "{{ basepath }}"
+  become_user: "{{ unixuser}}"
+
+- name: "[uwsgi-task] deactivate the environment
+  shell: "deactivate"
+  ignore_errors: yes
+  args:
+    chdir: "{{ basepath }}"
+  become_user: "{{ unixuser}}"
+
+- name: "[uwsgi-task] create the web service configuration file wsgi-dev.ini"
+  copy:
+    src: roles/wsgi-dev/files/wsgi-dev.ini
+    dest: "{{ basepath }}"
+    backup: yes
+  become_user: "{{ unixuser}}"
+
+- name: "[uwsgi-task] creating dir /run/wsgi"
+  file: name=/run/wsgi/ state=directory recurese=yes
+  become_user: "{{ unixuser}}"
+
+- name: "[uwsgi-task] copy the system service file of wsgi"
+  copy:
+    src: roles/wsgi-dev/files/uwsgi.service
+    dest: /etc/systemd/system/
+    backup: yes
+  become_user: "{{ unixuser}}"
+
+- name: "[uwsgi-task] check the status of the uwsgi service"
+  shell: "systemctl status uwsgi"
+  register: uwsgiststus
+  ignore_errors: yes
+  become_user: "{{ unixuser}}"
+
+- name: "[uwsgi-task] check the status of the uwsgi service"
+  shell: "systemctl stop uwsgi"
+  when: "'running' in uwsgistatus.stdout"
+  become_user: "{{ unixuser}}"
+
+- name: "[uwsgi-task] start the service if not started"
+  shell: "systemctl start uwsgi"
+  when: "'running' not in uwsgistatus.stdout"
+  become_user: "{{ unixuser}}"
+
+- name: "[nginx-task] copy the nginx configuration file of nginx"
+  copy:
+    src: roles/wsgi-dev/files/nginx.conf
+    dest: /etc/nginx/
+    backup: yes
+  become_user: "{{ unixuser}}"
+
+- name: "[mginx-task] check the status of the nginx service"
+  shell: "systemctl status nginx"
+  register: nginxststus
+  become_user: "{{ unixuser}}"
+
+- name: "[mginx-task] check the status of the nginx service"
+  shell: "systemctl stop nginx"
+  when: "'running' in nginxstatus.stdout"
+  become_user: "{{ unixuser}}"
+
+- name: "[nginx-task] start the nginx service if not started"
+  shell: "systemctl start nginx"
+  when: "'running' not in nginxstatus.stdout"
+  become_user: "{{ unixuser}}"
