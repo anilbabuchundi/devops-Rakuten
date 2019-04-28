@@ -93,3 +93,20 @@
   shell: "systemctl start nginx"
   when: "'running' not in nginxstatus.stdout"
   become_user: "{{ unixuser}}"
+  
+- name: "[nginx-task] enable the nginx service in system service level"
+  shell: "systemctl enable nginx"
+
+- name: "[nginx-task]  Cross check the nginx service in enabled or not system service level"
+  shell: "systemctl is-enabled nginx"
+  register: nginxservice
+
+- name: ""[nginx-task] Successfully enabled nginx service ay system level"
+  debug:
+    msg: "Successfully enabled nginx service after reboot"
+    when: "'enabled' in nginxservice.stdout"
+
+- name: ""[nginx-task] Successfully enabled nginx service ay system level"
+  fail:
+    msg: "Failed to enabled nginx service after reboot. Please cross check manually"
+    when: "'enabled' not in nginxservice.stdout"
